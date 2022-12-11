@@ -1,12 +1,13 @@
 
-/** $VER: Resources.rc (2022.12.05) P. Stuer **/
+/** $VER: Resources.rc (2022.12.11) P. Stuer **/
 
 #include "Resources.h"
 
 #include <windows.h>
+#include <winres.h>
 
 // English (United States) resources
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
 VS_VERSION_INFO versioninfo

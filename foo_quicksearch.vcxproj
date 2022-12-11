@@ -159,7 +159,9 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="foo_quicksearch.cpp" />
+    <ClCompile Include="ContextMenuHandler.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Preferences.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
@@ -173,11 +175,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Preferences.h" />
     <ClInclude Include="Resources.h" />
   </ItemGroup>
   <ItemGroup>

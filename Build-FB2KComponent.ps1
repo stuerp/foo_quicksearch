@@ -29,7 +29,7 @@ Set-PSDebug -Strict; # Equivalent of VBA "Option Explicit".
 
 $ErrorActionPreference = 'Stop';
 
-$PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Host;
+$PSStyle.OutputRendering = [System.Management.Automation.OutputRendering]::PlainText;
 
 # Note: The working directory is the solution directory.
 
@@ -47,7 +47,10 @@ function Install-Component
             $null = New-Item -Path '../bin/profile/user-components-x64/' -Name "$TargetName" -ItemType 'directory';
         }
 
-        Copy-Item "$PackagePath64/*" -Destination $ProfilePath -Force;
+        if (Test-Path -Path $PackagePath64)
+        {
+            Copy-Item "$PackagePath64/*" -Destination $ProfilePath -Force;
+        }
     }
 
     if (Test-Path -Path "../bin/x86")
@@ -62,7 +65,10 @@ function Install-Component
             $null = New-Item -Path '../bin/x86/profile/user-components/' -Name "$TargetName" -ItemType 'directory';
         }
 
-        Copy-Item "$PackagePath86/*" -Exclude "x64" -Destination $ProfilePath -Force;
+        if (Test-Path -Path $PackagePath86)
+        {
+            Copy-Item "$PackagePath86/*" -Exclude "x64" -Destination $ProfilePath -Force;
+        }
     }
 }
 

@@ -73,7 +73,7 @@ v0.1.0, 202x-xx-xx, *"Scratchin' the itch"*
 
 ## Acknowledgements / Credits
 
-* Peter Pawlowski, for the  [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
+* Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * [marc2k3](https://github.com/marc2k3) for [foo_qsearch](https://github.com/marc2003/foo_qsearch).
 
 ## Reference Material
