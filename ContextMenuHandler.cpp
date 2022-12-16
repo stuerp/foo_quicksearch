@@ -124,35 +124,17 @@ public:
             return;
         }
 
-        const pfc::string8 QueryText = pfc::format(FieldName, " ", GetPredicate(itemIndex, IsCtrlPressed).toUpper(), " ", FieldValue);
+        const pfc::string8 QueryText = pfc::format(FieldName, " ", GetPredicate(itemIndex, IsCtrlPressed).toUpper(), " ", FieldValue.toLower());
 
         if (!ShouldOpenMediaLibrarySearch())
         {
-            search_filter_v2::ptr Filter;
+            size_t PlaylistIndex = CreateAutoPlaylist(QueryText);
 
-            try
-            {
-                Filter = search_filter_manager_v2::get()->create_ex(QueryText, fb2k::service_new<completion_notify_dummy>(), search_filter_manager_v2::KFlagSuppressNotify);
-            }
-            catch (...)
-            {
-            }
-
-            if (Filter.is_valid())
+            if ((PlaylistIndex != pfc_infinite) && ShouldActivatePlaylist())
             {
                 auto plm = playlist_manager::get();
 
-                const size_t Playlist = plm->create_playlist(QueryText, QueryText.get_length(), SIZE_MAX);
-
-                if (Playlist != pfc_infinite)
-                {
-                    auto aplm = autoplaylist_manager::get();
-
-                    aplm->add_client_simple(QueryText, "", Playlist, 0);
-
-                    if (ShouldActivatePlaylist())
-                        plm->set_active_playlist(Playlist);
-                }
+                plm->set_active_playlist(PlaylistIndex);
             }
         }
         else
@@ -214,6 +196,52 @@ private:
 
         return "";
     }
+
+    size_t CreateAutoPlaylist(const pfc::string8 & queryText)
+    {
+        search_filter_v2::ptr Filter;
+
+        try
+        {
+            Filter = search_filter_manager_v2::get()->create_ex(queryText, fb2k::service_new<completion_notify_dummy>(), search_filter_manager_v2::KFlagSuppressNotify);
+        }
+        catch (...) { }
+
+        if (!Filter.is_valid())
+            return (size_t)pfc_infinite;
+
+        auto plm = playlist_manager::get();
+
+        const size_t PlaylistIndex = plm->create_playlist(queryText, queryText.get_length(), SIZE_MAX);
+
+        if (PlaylistIndex == pfc_infinite)
+            return (size_t)pfc_infinite;
+
+        if (_SendToAutoPlaylist)
+        {
+            auto aplm = autoplaylist_manager::get();
+
+            aplm->add_client_simple(queryText, "", PlaylistIndex, 0);
+        }
+        else
+        {
+            fb2k::arrayRef Items;
+
+            try
+            {
+                Items = library_index::get()->search(Filter, 0, fb2k::noAbort);
+            }
+            catch (...) {}
+
+            if (Items.is_valid())
+                plm->playlist_insert_items(PlaylistIndex, 0, Items->as_list_of<metadb_handle>(), pfc::bit_array_false());
+        }
+
+        return PlaylistIndex;
+    }
+
+private:
+    bool _SendToAutoPlaylist;
 };
 
 // Embed the command in the root of the context menu but separated from other commands.
