@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenuHandler.cpp (2022.12.11) P. Stuer **/
+/** $VER: ContextMenuHandler.cpp (2023.03.19) P. Stuer **/
 
 #include "framework.h"
 
@@ -49,7 +49,7 @@ public:
 
         bool IsCtrlPressed = ::IsKeyPressed(VK_CONTROL);
 
-        out = pfc::format(GetPredicate(itemIndex, IsCtrlPressed), " same ", GetFieldName(itemIndex));
+        out = pfc::format(GetVerb(itemIndex, IsCtrlPressed), " same ", GetFieldName(itemIndex));
     }
 
     /// <summary>
@@ -110,7 +110,11 @@ public:
             FB2K_BugCheck();
 
         if (handles.get_count() != 1)
+        {
+            FB2K_console_print(_ComponentName, ": Search was cancelled. Too many tracks selected.");
+
             return;
+        }
 
         bool IsCtrlPressed = ::IsKeyPressed(VK_CONTROL);
 
@@ -119,12 +123,14 @@ public:
 
         if (FieldValue.is_empty())
         {
-            FB2K_console_print(_ComponentName, ": Search cancelled. ", FieldName, " was not set or empty.");
+            FB2K_console_print(_ComponentName, ": Search was cancelled. ", FieldName, " was not set or empty.");
 
             return;
         }
 
-        const pfc::string8 QueryText = pfc::format(FieldName, " ", GetPredicate(itemIndex, IsCtrlPressed).toUpper(), " ", FieldValue.toLower());
+        const pfc::string8 QueryText = pfc::format(FieldName, " ", GetVerb(itemIndex, IsCtrlPressed).toUpper(), " ", FieldValue.toLower());
+
+        FB2K_console_print(_ComponentName, ": ", QueryText);
 
         if (!ShouldOpenMediaLibrarySearch())
         {
@@ -146,9 +152,9 @@ private:
     /// <summary>
     /// Gets the value of the specified field.
     /// </summary>
-    pfc::string8 GetFieldValue(const char * field, const metadb_handle_ptr & handle) const noexcept
+    pfc::string8 GetFieldValue(pfc::string8 fieldName, const metadb_handle_ptr & handle) const noexcept
     {
-        const pfc::string8 Pattern = pfc::format("[%", field, "%]");
+        const pfc::string8 Pattern = pfc::format("[%", fieldName, "%]");
 
         titleformat_object_ptr CompiledPattern;
 
@@ -158,21 +164,20 @@ private:
 
         auto pbc = playback_control::get();
 
-        metadb_handle_ptr NowPlaying;
+        metadb_handle_ptr TrackNowPlaying;
 
-        if (!pbc->get_now_playing(NowPlaying))
+        if (!pbc->get_now_playing(TrackNowPlaying) || (!TrackNowPlaying.is_empty() && (TrackNowPlaying->get_location() != handle->get_location())))
             handle->format_title(nullptr, Result, CompiledPattern, nullptr);
         else
-            if (NowPlaying->get_location() == handle->get_location())
-                pbc->playback_format_title(nullptr, Result, CompiledPattern, nullptr, playback_control::display_level_all);
+            pbc->playback_format_title(nullptr, Result, CompiledPattern, nullptr, playback_control::display_level_all);
 
         return Result;
     }
 
     /// <summary>
-    /// Gets the predicate.
+    /// Gets the verb of the predicate.
     /// </summary>
-    pfc::string8 GetPredicate(uint32_t, bool isCtrlPressed) const noexcept
+    pfc::string8 GetVerb(uint32_t, bool isCtrlPressed) const noexcept
     {
         return !isCtrlPressed ? "Is" : "Has";
     }
@@ -219,22 +224,45 @@ private:
 
         if (_SendToAutoPlaylist)
         {
+            // Add the items to an autoplaylist.
             auto aplm = autoplaylist_manager::get();
 
             aplm->add_client_simple(queryText, "", PlaylistIndex, 0);
         }
         else
         {
-            fb2k::arrayRef Items;
-
-            try
+            // Add the items to a regular playlist.
+            if (core_version_info_v2::get()->test_version(2,0,0,0))
             {
-                Items = library_index::get()->search(Filter, 0, fb2k::noAbort);
-            }
-            catch (...) {}
+                fb2k::arrayRef Items;
 
-            if (Items.is_valid())
-                plm->playlist_insert_items(PlaylistIndex, 0, Items->as_list_of<metadb_handle>(), pfc::bit_array_false());
+                try
+                {
+                    auto li = library_index::get();
+
+                    Items = li->search(Filter, 0, fb2k::noAbort);
+                }
+                catch (...) {}
+
+                if (Items.is_valid())
+                    plm->playlist_insert_items(PlaylistIndex, 0, Items->as_list_of<metadb_handle>(), pfc::bit_array_false());
+            }
+            else
+            {
+                metadb_handle_list Items;
+
+                library_manager::get()->get_all_items(Items);
+
+                pfc::array_t<bool> Mask;
+
+                Mask.set_size(Items.get_count());
+
+                Filter->test_multi(Items, Mask.get_ptr());
+
+                Items.filter_mask(Mask.get_ptr());
+
+                plm->playlist_insert_items(PlaylistIndex, 0, Items, pfc::bit_array_false());
+            }
         }
 
         return PlaylistIndex;

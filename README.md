@@ -11,7 +11,8 @@
 ## Requirements
 
 * Microsoft Windows 10 or later
-* [foobar2000](https://www.foobar2000.org/download) v2.0 or later
+* [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
+
 
 ## Getting started
 
@@ -23,14 +24,14 @@ or
 
 ## Developing
 
-The code builds out-of-the box with Visual Studio.
+The code builds out-of-the box with Visual Studio 2022.
 
 ### Requirements
 
-To build the code:
+To build the code you need:
 
 * [Microsoft Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) or later.
-* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2022-20-20.
+* [foobar2000 SDK](https://www.foobar2000.org/SDK) 2023-04-18.
 * [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320.
 
 To create the deployment package:
@@ -50,8 +51,8 @@ Create the following directory structure:
     sdk
 
 * `3rdParty/WTL10_10320` contains WTL 10.0.10320.
-* `bin` contains a portable version of foobar2000 2.0 for debugging purposes.
-* `bin/x86` contains a portable version of foobar2000 1.6 for debugging purposes.
+* `bin` contains a portable version of foobar2000 64-bit for debugging purposes.
+* `bin/x86` contains a portable version of foobar2000 32-bit for debugging purposes.
 * `foo_quicksearch` contains the [Git](https://github.com/stuerp/foo_quicksearch) repository.
 * `out` receives a deployable version of the component.
 * `sdk` contains the foobar2000 SDK.
@@ -60,6 +61,10 @@ Create the following directory structure:
 
 Open `foo_quicksearch.sln` with Visual Studio and build the solution.
 
+### Packaging
+
+To create the component first build the x86 configuration and next the x64 configuration.
+
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature
@@ -67,7 +72,7 @@ branch. Pull requests are warmly welcome.
 
 ## Change Log
 
-v0.1.0, 202x-xx-xx, *"Scratchin' the itch"*
+v0.1.0, 2023-xx-xx, *"Scratchin' the itch"*
 
 * Initial release.
 

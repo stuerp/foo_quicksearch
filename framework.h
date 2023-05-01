@@ -1,5 +1,5 @@
 
-/** $VER: framework.h (2022.12.11) P. Stuer **/
+/** $VER: framework.h (2023.02.25) P. Stuer **/
 
 #pragma once
 
