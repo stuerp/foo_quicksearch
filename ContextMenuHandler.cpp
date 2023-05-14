@@ -1,5 +1,5 @@
 
-/** $VER: ContextMenuHandler.cpp (2023.03.19) P. Stuer **/
+/** $VER: ContextMenuHandler.cpp (2023.05.14) P. Stuer **/
 
 #include "framework.h"
 
@@ -238,9 +238,11 @@ private:
 
                 try
                 {
-                    auto li = library_index::get();
+//                  auto li = library_index::get();
+                    auto sim = search_index_manager::get();
+                    auto li = sim->get_library_index();
 
-                    Items = li->search(Filter, 0, fb2k::noAbort);
+                    Items = li->search(Filter, 0, search_index::flag_sort, fb2k::noAbort);
                 }
                 catch (...) {}
 
@@ -269,7 +271,7 @@ private:
     }
 
 private:
-    bool _SendToAutoPlaylist;
+    bool _SendToAutoPlaylist = false;
 };
 
 // Embed the command in the root of the context menu but separated from other commands.
