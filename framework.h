@@ -1,5 +1,5 @@
 
-/** $VER: framework.h (2023.02.25) P. Stuer **/
+/** $VER: framework.h (2023.07.09) P. Stuer **/
 
 #pragma once
 
@@ -16,5 +16,3 @@
 
 #include "Preferences.h"
 #include "Resources.h"
-
-constexpr const char * _ComponentName = STR_COMPONENT_NAME;

@@ -1,7 +1,9 @@
 
-/** $VER: ContextMenuHandler.cpp (2023.05.14) P. Stuer **/
+/** $VER: ContextMenuHandler.cpp (2023.07.09) P. Stuer **/
 
 #include "framework.h"
+
+#include "QuickSearch.h"
 
 #pragma hdrstop
 
@@ -30,7 +32,7 @@ static constexpr std::array _ItemGUIDs =
 class ContextMenuHandler : public contextmenu_item_simple
 {
 public:
-#pragma region("contextmenu_item interface")
+    #pragma region("contextmenu_item interface")
     /// <summary>
     /// Retrieves number of menu items provided by this contextmenu_item implementation.
     /// </summary>
@@ -49,7 +51,7 @@ public:
 
         bool IsCtrlPressed = ::IsKeyPressed(VK_CONTROL);
 
-        out = pfc::format(GetVerb(itemIndex, IsCtrlPressed), " same ", GetFieldName(itemIndex));
+        out = pfc::format(GetVerb(IsCtrlPressed), " same ", GetFieldName(itemIndex));
     }
 
     /// <summary>
@@ -88,9 +90,9 @@ public:
 
         return true;
     }
-#pragma endregion
+    #pragma endregion
 
-#pragma region("contextmenu_item_v2 interface")
+    #pragma region("contextmenu_item_v2 interface")
     /// <summary>
     /// Gets the parent of all our menu items.
     /// </summary>
@@ -98,9 +100,9 @@ public:
     {
         return _ContextMenuGUID;
     }
-#pragma endregion
+    #pragma endregion
 
-#pragma region("contextmenu_item_simple interface")
+    #pragma region("contextmenu_item_simple interface")
     /// <summary>
     /// Executes the specified command.
     /// </summary>
@@ -111,7 +113,7 @@ public:
 
         if (handles.get_count() != 1)
         {
-            FB2K_console_print(_ComponentName, ": Search was cancelled. Too many tracks selected.");
+            FB2K_console_print(STR_COMPONENT_NAME, ": Search was cancelled. Too many tracks selected.");
 
             return;
         }
@@ -119,69 +121,13 @@ public:
         bool IsCtrlPressed = ::IsKeyPressed(VK_CONTROL);
 
         const pfc::string8 FieldName = GetFieldName(itemIndex);
-        const pfc::string8 FieldValue = GetFieldValue(FieldName, handles[0]);
+        const pfc::string8 Verb = GetVerb(IsCtrlPressed);
 
-        if (FieldValue.is_empty())
-        {
-            FB2K_console_print(_ComponentName, ": Search was cancelled. ", FieldName, " was not set or empty.");
-
-            return;
-        }
-
-        const pfc::string8 QueryText = pfc::format(FieldName, " ", GetVerb(itemIndex, IsCtrlPressed).toUpper(), " ", FieldValue.toLower());
-
-        FB2K_console_print(_ComponentName, ": ", QueryText);
-
-        if (!ShouldOpenMediaLibrarySearch())
-        {
-            size_t PlaylistIndex = CreateAutoPlaylist(QueryText);
-
-            if ((PlaylistIndex != pfc_infinite) && ShouldActivatePlaylist())
-            {
-                auto plm = playlist_manager::get();
-
-                plm->set_active_playlist(PlaylistIndex);
-            }
-        }
-        else
-            library_search_ui::get()->show(QueryText);
+        _QuickSearch.Execute(itemIndex, handles, FieldName, Verb);
     }
-#pragma endregion
+    #pragma endregion
 
 private:
-    /// <summary>
-    /// Gets the value of the specified field.
-    /// </summary>
-    pfc::string8 GetFieldValue(pfc::string8 fieldName, const metadb_handle_ptr & handle) const noexcept
-    {
-        const pfc::string8 Pattern = pfc::format("[%", fieldName, "%]");
-
-        titleformat_object_ptr CompiledPattern;
-
-        titleformat_compiler::get()->compile_safe(CompiledPattern, Pattern);
-
-        pfc::string8 Result;
-
-        auto pbc = playback_control::get();
-
-        metadb_handle_ptr TrackNowPlaying;
-
-        if (!pbc->get_now_playing(TrackNowPlaying) || (!TrackNowPlaying.is_empty() && (TrackNowPlaying->get_location() != handle->get_location())))
-            handle->format_title(nullptr, Result, CompiledPattern, nullptr);
-        else
-            pbc->playback_format_title(nullptr, Result, CompiledPattern, nullptr, playback_control::display_level_all);
-
-        return Result;
-    }
-
-    /// <summary>
-    /// Gets the verb of the predicate.
-    /// </summary>
-    pfc::string8 GetVerb(uint32_t, bool isCtrlPressed) const noexcept
-    {
-        return !isCtrlPressed ? "Is" : "Has";
-    }
-
     /// <summary>
     /// Gets the field name.
     /// </summary>
@@ -202,80 +148,20 @@ private:
         return "";
     }
 
-    size_t CreateAutoPlaylist(const pfc::string8 & queryText)
+    /// <summary>
+    /// Gets the verb of the predicate.
+    /// </summary>
+    pfc::string8 GetVerb(bool isCtrlPressed) const noexcept
     {
-        search_filter_v2::ptr Filter;
-
-        try
-        {
-            Filter = search_filter_manager_v2::get()->create_ex(queryText, fb2k::service_new<completion_notify_dummy>(), search_filter_manager_v2::KFlagSuppressNotify);
-        }
-        catch (...) { }
-
-        if (!Filter.is_valid())
-            return (size_t)pfc_infinite;
-
-        auto plm = playlist_manager::get();
-
-        const size_t PlaylistIndex = plm->create_playlist(queryText, queryText.get_length(), SIZE_MAX);
-
-        if (PlaylistIndex == pfc_infinite)
-            return (size_t)pfc_infinite;
-
-        if (_SendToAutoPlaylist)
-        {
-            // Add the items to an autoplaylist.
-            auto aplm = autoplaylist_manager::get();
-
-            aplm->add_client_simple(queryText, "", PlaylistIndex, 0);
-        }
-        else
-        {
-            // Add the items to a regular playlist.
-            if (core_version_info_v2::get()->test_version(2,0,0,0))
-            {
-                fb2k::arrayRef Items;
-
-                try
-                {
-//                  auto li = library_index::get();
-                    auto sim = search_index_manager::get();
-                    auto li = sim->get_library_index();
-
-                    Items = li->search(Filter, 0, search_index::flag_sort, fb2k::noAbort);
-                }
-                catch (...) {}
-
-                if (Items.is_valid())
-                    plm->playlist_insert_items(PlaylistIndex, 0, Items->as_list_of<metadb_handle>(), pfc::bit_array_false());
-            }
-            else
-            {
-                metadb_handle_list Items;
-
-                library_manager::get()->get_all_items(Items);
-
-                pfc::array_t<bool> Mask;
-
-                Mask.set_size(Items.get_count());
-
-                Filter->test_multi(Items, Mask.get_ptr());
-
-                Items.filter_mask(Mask.get_ptr());
-
-                plm->playlist_insert_items(PlaylistIndex, 0, Items, pfc::bit_array_false());
-            }
-        }
-
-        return PlaylistIndex;
+        return !isCtrlPressed ? "Is" : "Has";
     }
 
 private:
-    bool _SendToAutoPlaylist = false;
+    QuickSearch _QuickSearch;
 };
 
 // Embed the command in the root of the context menu but separated from other commands.
-static contextmenu_group_popup_factory _ContextMenuGroup(_ContextMenuGUID, contextmenu_groups::root, _ComponentName, 0);
+static contextmenu_group_popup_factory _ContextMenuGroup(_ContextMenuGUID, contextmenu_groups::root, STR_COMPONENT_NAME, 0);
 
 FB2K_SERVICE_FACTORY(ContextMenuHandler);
 #pragma endregion

@@ -5,12 +5,11 @@
 
 ## Features
 
-* Supports foobar2000 2.0 (32-bit and 64-bit version)
 * Supports dark mode.
 
 ## Requirements
 
-* Microsoft Windows 10 or later
+* Tested on Microsoft Windows 10 and later.
 * [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
 
 
@@ -20,13 +19,9 @@
 
 or
 
-* Import `foo_quicksearch.fbk2-component` into foobar2000 using "File / Preferences / Components / Install...".
+* Import `foo_quicksearch.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
 
 ## Developing
-
-The code builds out-of-the box with Visual Studio 2022.
-
-### Requirements
 
 To build the code you need:
 
@@ -71,6 +66,10 @@ If you'd like to contribute, please fork the repository and use a feature
 branch. Pull requests are warmly welcome.
 
 ## Change Log
+
+v1.1.0, 2023-xx-xx, *""*
+
+* Improved handling of fields that contain multiple values.
 
 v1.0.0, 2023-05-14, *"Scratchin' the itch"*
 

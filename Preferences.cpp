@@ -13,7 +13,7 @@ static constexpr GUID GUIDAdvancedConfig = { 0x57cd1f9d, 0xb4fc, 0x46a9, { 0xad,
 #pragma endregion
 
 #pragma region("Preferences")
-static advconfig_branch_factory _AdvancedConfig(_ComponentName, GUIDAdvancedConfig, advconfig_branch::guid_branch_tools, 0);
+static advconfig_branch_factory _AdvancedConfig(STR_COMPONENT_NAME, GUIDAdvancedConfig, advconfig_branch::guid_branch_tools, 0);
     static advconfig_radio_factory _CreatePlaylistSettings("Create playlist", GUIDCreatePlaylist, GUIDAdvancedConfig, 0, true);
     static advconfig_radio_factory _ActivatePlaylistSettings("Create and activate playlist", GUIDActivatePlaylist, GUIDAdvancedConfig, 1, false);
     static advconfig_radio_factory _OpenMediaLibrarySearchSettings("Open Media Library search window", GUIDOpenMediaLibrarySearch, GUIDAdvancedConfig, 2, false);

@@ -160,8 +160,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ContextMenuHandler.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="Preferences.cpp" />
+    <ClCompile Include="QuickSearch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\sdk\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj">
@@ -183,6 +184,7 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="Preferences.h" />
+    <ClInclude Include="QuickSearch.h" />
     <ClInclude Include="Resources.h" />
   </ItemGroup>
   <ItemGroup>
